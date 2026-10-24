@@ -11,7 +11,7 @@ connectMongoDB()
     .catch((err) => logger.error({ err }, "Failed to restore Telegram listeners"));
 
 // app.use(httpLogger);
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 
 

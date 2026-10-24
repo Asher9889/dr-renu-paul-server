@@ -2,12 +2,13 @@ import { Response } from "express";
 
 export class ApiResponse {
     // due to static we can call this method without creating an instance of the class
-    static success(res: Response, statusCode = 200, message = "Success", data:any = []) {
+    static success(res: Response, statusCode = 200, message = "Success", data:any = [], meta?: unknown) {
         return res.status(statusCode).json({
             success: true,
             statusCode,
             message,
             data,
+            ...(meta !== undefined ? { meta } : {}),
         });
     }
 
@@ -18,6 +19,10 @@ export class ApiResponse {
             message,
             errors: errors || [],
         });
+    }
+
+    static noContent(res: Response) {
+        return res.status(204).send();
     }
 }
 
@@ -37,4 +42,3 @@ export class ApiError extends Error {
     }
 
 }
-

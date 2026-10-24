@@ -1,9 +1,36 @@
-import { parseStringDurationToMs } from "../utils/index.ts";
-import { StringValue } from "ms";
-
+const port = Number(process.env.PORT);
+const minioEndpoint = (process.env.MINIO_ENDPOINT || "").replace(/\/+$/, "");
+const minioBucketName = process.env.MINIO_BUCKET_NAME || "";
+const minioPublicUrl = (process.env.MINIO_PUBLIC_URL || minioEndpoint).replace(/\/+$/, "");
+const apiPublicUrl = (process.env.API_PUBLIC_URL || "").replace(/\/+$/, "");
+const minioMediaMode = process.env.MINIO_MEDIA_MODE === "public" ? "public" : "proxy";
 
 const envConfig = {
-    port: Number(process.env.PORT),
+    port,
+
+    apiPublicUrl,
+
+    minio: {
+        endpoint: minioEndpoint,
+        region: process.env.MINIO_REGION || "us-east-1",
+        accessKey: process.env.MINIO_ACCESS_KEY || "",
+        secretKey: process.env.MINIO_SECRET_KEY || "",
+        bucketName: minioBucketName,
+        publicUrl: minioPublicUrl,
+        mediaMode: minioMediaMode,
+    },
+
+    blog: {
+        author: {
+            id: "author_01",
+            name: process.env.BLOG_AUTHOR_NAME || "Dr. Renu Paul",
+            role: process.env.BLOG_AUTHOR_ROLE || "MD (Hom.) · Senior Homoeopath",
+            avatar: {
+                url: process.env.BLOG_AUTHOR_AVATAR_URL || `${minioPublicUrl}/${minioBucketName}/author/dr-renu-paul.webp`,
+                alt: process.env.BLOG_AUTHOR_AVATAR_ALT || "Portrait of Dr. Renu Paul",
+            },
+        },
+    },
 
     // MongoDB Configuration
 
