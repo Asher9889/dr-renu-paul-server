@@ -27,6 +27,8 @@ import type {
   TCreateBlogPostPayload,
   TPageMeta,
   TPublishBlogPostPayload,
+  TPublicBlogFeaturedQuery,
+  TPublicBlogFeaturedResponse,
   TPublicBlogPostListQuery,
   TPublicBlogPostListResponse,
   TTiptapDoc,
@@ -251,6 +253,7 @@ export class BlogService {
       cover: this.serializeCover(post.cover),
       tags: this.serializeTags(post.tags),
       status: post.status,
+      featured: Boolean(post.featured),
       publishedAt: post.publishedAt ? post.publishedAt.toISOString() : null,
       readingTimeMinutes: post.readingTimeMinutes,
       createdAt: post.createdAt.toISOString(),
@@ -487,6 +490,22 @@ export class BlogService {
     };
   };
 
+  getPublicFeaturedPosts = async (
+    query: TPublicBlogFeaturedQuery,
+  ): Promise<TPublicBlogFeaturedResponse> => {
+    const posts = await BlogPostModel.find({
+      status: BLOG_POST_STATUS.PUBLISHED,
+      featured: true,
+      publishedAt: { $lte: new Date() },
+    })
+      .sort({ publishedAt: -1, _id: -1 })
+      .limit(query.limit);
+
+    return {
+      data: posts.map((post) => this.serializePublicSummary(post)),
+    };
+  };
+
   getPublicPost = async (slug: string): Promise<TBlogPostDetail> => {
     const post = await BlogPostModel.findOne({
       slug,
@@ -615,9 +634,7 @@ export class BlogService {
     return this.serializeAdminDetail(post);
   };
 
-  createPost = async (
-    payload: TCreateBlogPostPayload,
-  ): Promise<TAdminBlogPostDetail> => {
+  createPost = async (payload: TCreateBlogPostPayload): Promise<TAdminBlogPostDetail> => {
     const content = this.validateContent(payload.content ?? EMPTY_TIPTAP_DOC);
     const tags = normalizeTags(payload.tags ?? []);
     const cover = payload.cover ? normalizeCover(payload.cover) : null;
@@ -637,6 +654,7 @@ export class BlogService {
         cover,
         tags,
         status: BLOG_POST_STATUS.DRAFT,
+        featured: payload.featured ?? false,
         publishedAt: null,
         firstPublishedAt: null,
         authorId: envConfig.blog.author.id,
@@ -658,10 +676,7 @@ export class BlogService {
     }
   };
 
-  updatePost = async (
-    id: string,
-    payload: TUpdateBlogPostPayload,
-  ): Promise<TAdminBlogPostDetail> => {
+  updatePost = async (id: string, payload: TUpdateBlogPostPayload): Promise<TAdminBlogPostDetail> => {
     const post = await this.findAdminPost(id);
 
     if (payload.slug !== undefined && payload.slug !== post.slug) {
@@ -693,11 +708,15 @@ export class BlogService {
     }
 
     if (payload.cover !== undefined) {
-      post.cover = normalizeCover(payload.cover);
+      post.cover = payload.cover === null ? null : normalizeCover(payload.cover);
     }
 
     if (payload.tags !== undefined) {
       post.tags = normalizeTags(payload.tags);
+    }
+
+    if (payload.featured !== undefined) {
+      post.featured = payload.featured;
     }
 
     if (post.status === BLOG_POST_STATUS.PUBLISHED) {

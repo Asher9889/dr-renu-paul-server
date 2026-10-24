@@ -7,6 +7,8 @@ export const BLOG_POST_STATUS = {
 export const BLOG_LIMITS = {
   PUBLIC_DEFAULT_LIMIT: 9,
   PUBLIC_MAX_LIMIT: 30,
+  FEATURED_DEFAULT_LIMIT: 3,
+  FEATURED_MAX_LIMIT: 6,
   ADMIN_DEFAULT_LIMIT: 20,
   ADMIN_MAX_LIMIT: 100,
   RELATED_POSTS: 3,
@@ -16,6 +18,7 @@ export const BLOG_LIMITS = {
 
 export const BLOG_MESSAGES = {
   POSTS_FETCHED: "Blog posts fetched successfully.",
+  FEATURED_POSTS_FETCHED: "Featured blog posts fetched successfully.",
   POST_FETCHED: "Blog post fetched successfully.",
   POST_CREATED: "Blog post created successfully.",
   POST_UPDATED: "Blog post updated successfully.",

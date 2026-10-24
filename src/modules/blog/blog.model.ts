@@ -33,6 +33,7 @@ export interface IBlogPost extends Document {
   cover: IBlogCover | null;
   tags: IBlogTag[];
   status: TBlogPostStatus;
+  featured: boolean;
   publishedAt: Date | null;
   firstPublishedAt: Date | null;
   authorId: string;
@@ -115,6 +116,11 @@ const blogPostSchema = new Schema<IBlogPost>(
       default: BLOG_POST_STATUS.DRAFT,
       required: true,
     },
+    featured: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     publishedAt: {
       type: Date,
       default: null,
@@ -146,6 +152,7 @@ const blogPostSchema = new Schema<IBlogPost>(
 
 blogPostSchema.index({ slug: 1 }, { unique: true });
 blogPostSchema.index({ status: 1, publishedAt: -1, _id: -1 });
+blogPostSchema.index({ featured: 1, status: 1, publishedAt: -1, _id: -1 });
 blogPostSchema.index({ "tags.slug": 1, status: 1, publishedAt: -1 });
 blogPostSchema.index({ status: 1, updatedAt: -1 });
 

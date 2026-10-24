@@ -8,6 +8,7 @@ import {
   adminBlogPostListQuerySchema,
   adminBlogPostParamsSchema,
   createBlogPostSchema,
+  publicBlogFeaturedQuerySchema,
   publicBlogPostListQuerySchema,
   publicBlogPostParamsSchema,
   publishBlogPostSchema,
@@ -17,6 +18,7 @@ import {
 const blogRoutes = express.Router();
 
 blogRoutes.get("/posts", queryValidate(publicBlogPostListQuerySchema), blogController.getPublicPosts);
+blogRoutes.get("/featured", queryValidate(publicBlogFeaturedQuerySchema), blogController.getPublicFeaturedPosts);
 blogRoutes.get("/posts/:slug", paramsValidate(publicBlogPostParamsSchema), blogController.getPublicPost);
 blogRoutes.get("/tags", blogController.getPublicTags);
 blogRoutes.get("/author", blogController.getPublicAuthor);

@@ -1,8 +1,9 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import { globalErrorHandler, routeNotExistsHandler } from "./utils/index.ts";
 import { connectMongoDB } from "./db/index.ts"
-import { envConfig, logger } from "./config/index.ts";
 import apiRoutes from "./routes/index.ts";
+import { envConfig, logger } from "./config/index.ts";
 
 
 const app = express();
@@ -12,7 +13,7 @@ connectMongoDB()
 
 // app.use(httpLogger);
 app.use(express.json({ limit: "2mb" }));
-
+app.use(cookieParser());
 
 
 app.use("/api", apiRoutes);

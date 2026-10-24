@@ -1,68 +1,65 @@
-// import { NextFunction, Request, Response } from "express";
-// import { ApiError } from "../utils/index.ts";
-// import { StatusCodes } from "http-status-codes";
-// import jwt from "jsonwebtoken";
-// import { envConfig } from "../config/index.ts";
-// import type { TAccessTokenPayload } from "../modules/auth/auth.types.ts";
-// import mongoose from "mongoose";
-// import { logger } from "../config/index.ts";
-// import UserModel from "../modules/user/user.model.ts";
-// import { ACCOUNT_STATUS } from "../modules/user/user.constant.ts";
+import { NextFunction, Request, Response } from "express";
+import { ApiError } from "../utils/index.ts";
+import { StatusCodes } from "http-status-codes";
+import jwt from "jsonwebtoken";
+import { envConfig } from "../config/index.ts";
+import type { TAccessTokenPayload } from "../modules/auth/auth.types.ts";
+import mongoose from "mongoose";
+import { logger } from "../config/index.ts";
+import { UserModel } from "../modules/user/user.model.ts";
+import { ACCOUNT_STATUS } from "../modules/user/user.constant.ts";
 
+async function authenticate(req: Request, res: Response, next: NextFunction) {
+    try {
+        logger.info("Authenticating user...");
+        const accessToken = req.cookies.accessToken;
 
-// async function authenticate(req: Request, res: Response, next: NextFunction) {
+        if (!accessToken) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Access token is required");
+        }
 
-//     try {
-//         logger.info("Authenticating user...");
-//         const accessToken = req.cookies.accessToken;
+        const decoded = jwt.verify(accessToken, envConfig.jwtConfig.accessTokenSecret) as TAccessTokenPayload;
 
-//         if (!accessToken) {
-//             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Access token is required");
-//         }
+        if (!decoded?.id || !decoded?.role) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Invalid access token");
+        }
 
-//         const decoded = jwt.verify(accessToken, envConfig.jwtConfig.accessTokenSecret) as TAccessTokenPayload;
+        const isValidId = mongoose.Types.ObjectId.isValid(decoded.id);
 
-//         if (!decoded?.id || !decoded?.role) {
-//             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Invalid access token");
-//         }
+        if (!isValidId) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: User not found");
+        }
 
-//         // check is valid id?
-//         const isValidId = mongoose.Types.ObjectId.isValid(decoded.id);
+        const user = await UserModel.findById(decoded.id).select("-password").lean();
 
-//         if (!isValidId) {
-//             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: User not found");
-//         }
+        if (!user) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: User not found");
+        }
 
-//         const user = await UserModel.findById(decoded.id).select("-password").lean();
+        if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Account is inactive");
+        }
 
-//         if (!user) {
-//             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: User not found");
-//         }
+        req.validatedUser = user;
 
-//         if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) {
-//             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Account is inactive");
-//         }
+        logger.info("User authenticated successfully");
+        return next();
+    } catch (error: any) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return next(new ApiError(StatusCodes.UNAUTHORIZED, "Access token has expired"));
+        }
 
-//         req.validatedUser = user;
+        if (error instanceof jwt.JsonWebTokenError) {
+            return next(new ApiError(StatusCodes.UNAUTHORIZED, "Invalid access token"));
+        }
 
-//         logger.info("User authenticated successfully");
-//         return next();
-//     } catch (error: any) {
-//         if (error instanceof jwt.TokenExpiredError) {
-//             return next(new ApiError(StatusCodes.UNAUTHORIZED, "Access token has expired"));
-//         }
+        if (error instanceof ApiError) {
+            return next(error);
+        }
 
-//         if (error instanceof jwt.JsonWebTokenError) {
-//             return next(new ApiError(StatusCodes.UNAUTHORIZED, "Invalid access token"));
-//         }
+        logger.error("Error occurred while authenticating user:", error);
+        return next(new ApiError(StatusCodes.UNAUTHORIZED, error?.message || "Unauthorized"));
+    }
+}
 
-//         if (error instanceof ApiError) {
-//             return next(error);
-//         }
-
-//         logger.error("Error occurred while authenticating user:", error);
-//         return next(new ApiError(StatusCodes.UNAUTHORIZED, error?.message || "Unauthorized"));
-//     }
-
-// }
-// export default authenticate;
+export default authenticate;

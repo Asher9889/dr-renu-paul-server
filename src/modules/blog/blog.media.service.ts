@@ -58,11 +58,7 @@ function isObjectNotFound(error: unknown): boolean {
   );
 }
 
-export class BlogMediaService {
-  uploadImage = async (
-    file: Express.Multer.File,
-    requestBaseUrl: string,
-  ): Promise<TUploadedMedia> => {
+export class BlogMediaService {uploadImage = async (file: Express.Multer.File): Promise<TUploadedMedia> => {
     if (file.size > BLOG_LIMITS.MAX_UPLOAD_BYTES) {
       throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, "Image is too large.", [
         { field: "file", message: "Images must be 8 MB or smaller." },
@@ -72,9 +68,7 @@ export class BlogMediaService {
     const detectedType = await fileTypeFromBuffer(file.buffer);
 
     if (!detectedType || !isAllowedMimeType(detectedType.mime)) {
-      throw new ApiError(
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        "Unsupported image type.",
+      throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY,"Unsupported image type.",
         [
           {
             field: "file",
@@ -131,7 +125,7 @@ export class BlogMediaService {
     }
 
     return {
-      url: buildMediaUrl(key, requestBaseUrl),
+      url: buildMediaUrl(key, envConfig.minio.publicUrl),
       width,
       height,
       mimeType: detectedType.mime,

@@ -12,6 +12,7 @@ import type {
   TTiptapDoc,
   TTiptapHardBreakNode,
   TTiptapHeadingNode,
+  TTiptapImageNode,
   TTiptapInlineNode,
   TTiptapListItemNode,
   TTiptapOrderedListNode,
@@ -48,6 +49,12 @@ const italicMarkSchema = z
   })
   .strict();
 
+const underlineMarkSchema = z
+  .object({
+    type: z.literal("underline"),
+  })
+  .strict();
+
 const linkMarkSchema = z
   .object({
     type: z.literal("link"),
@@ -66,6 +73,7 @@ const linkMarkSchema = z
 const markSchema = z.union([
   boldMarkSchema,
   italicMarkSchema,
+  underlineMarkSchema,
   linkMarkSchema,
 ]);
 
@@ -162,12 +170,26 @@ const blockquoteNodeSchema: z.ZodType<TTiptapBlockquoteNode> = z.lazy(() =>
     .strict(),
 );
 
+const imageNodeSchema: z.ZodType<TTiptapImageNode> = z
+  .object({
+    type: z.literal("image"),
+    attrs: z
+      .object({
+        src: httpUrlSchema,
+        alt: z.string().trim().max(300).nullish(),
+        title: z.string().trim().max(300).nullish(),
+      })
+      .strict(),
+  })
+  .strict();
+
 const blockNodeSchema: z.ZodType<TTiptapBlockNode> = z.union([
   paragraphNodeSchema,
   headingNodeSchema,
   bulletListNodeSchema,
   orderedListNodeSchema,
   blockquoteNodeSchema,
+  imageNodeSchema,
 ]);
 
 export const tiptapDocSchema: z.ZodType<TTiptapDoc> = z
@@ -203,8 +225,9 @@ export const createBlogPostSchema = z
       .optional(),
     excerpt: z.string().trim().max(200, "Excerpt must be 200 characters or fewer.").optional(),
     content: tiptapDocSchema.optional(),
-    cover: blogCoverInputSchema.optional(),
+    cover: blogCoverInputSchema.nullish(),
     tags: tagsSchema.optional(),
+    featured: z.boolean().optional(),
   })
   .strict();
 
@@ -235,6 +258,18 @@ export const publicBlogPostListQuerySchema = z.object({
       `Public limit cannot exceed ${BLOG_LIMITS.PUBLIC_MAX_LIMIT}.`,
     )
     .default(BLOG_LIMITS.PUBLIC_DEFAULT_LIMIT),
+});
+
+export const publicBlogFeaturedQuerySchema = z.object({
+  limit: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(
+      BLOG_LIMITS.FEATURED_MAX_LIMIT,
+      `Featured limit cannot exceed ${BLOG_LIMITS.FEATURED_MAX_LIMIT}.`,
+    )
+    .default(BLOG_LIMITS.FEATURED_DEFAULT_LIMIT),
 });
 
 export const adminBlogPostListQuerySchema = z.object({

@@ -1,4 +1,5 @@
-import ms, { StringValue } from "ms";
+import ms from "ms";
+import type { StringValue } from "ms";
 
 function parseStringDurationToMs(value: StringValue, name: string): number {
   if (!value) {

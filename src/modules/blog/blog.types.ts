@@ -4,6 +4,7 @@ import type {
   adminBlogPostParamsSchema,
   blogCoverInputSchema,
   createBlogPostSchema,
+  publicBlogFeaturedQuerySchema,
   publicBlogPostListQuerySchema,
   publicBlogPostParamsSchema,
   publishBlogPostSchema,
@@ -17,6 +18,7 @@ export type TBlogPostStatus =
 export type TTiptapMark =
   | { type: "bold" }
   | { type: "italic" }
+  | { type: "underline" }
   | {
       type: "link";
       attrs: {
@@ -52,6 +54,15 @@ export interface TTiptapParagraphNode {
   content?: TTiptapInlineNode[] | undefined;
 }
 
+export interface TTiptapImageNode {
+  type: "image";
+  attrs: {
+    src: string;
+    alt?: string | null | undefined;
+    title?: string | null | undefined;
+  };
+}
+
 export interface TTiptapBlockquoteNode {
   type: "blockquote";
   attrs?:
@@ -84,7 +95,8 @@ export type TTiptapBlockNode =
   | TTiptapHeadingNode
   | TTiptapBulletListNode
   | TTiptapOrderedListNode
-  | TTiptapBlockquoteNode;
+  | TTiptapBlockquoteNode
+  | TTiptapImageNode;
 
 export interface TTiptapDoc {
   type: "doc";
@@ -150,6 +162,7 @@ export interface TAdminBlogPostSummary {
   cover: TBlogCover | null;
   tags: TBlogTag[];
   status: TBlogPostStatus;
+  featured: boolean;
   publishedAt: string | null;
   readingTimeMinutes: number;
   createdAt: string;
@@ -172,6 +185,10 @@ export interface TPageMeta {
 export type TPublicBlogPostListResponse = {
   data: TBlogPostSummary[];
   meta: TPageMeta & { tag: string | null };
+};
+
+export type TPublicBlogFeaturedResponse = {
+  data: TBlogPostSummary[];
 };
 
 export type TAdminBlogPostListResponse = {
@@ -199,6 +216,9 @@ export type TUpdateBlogPostPayload = z.infer<typeof updateBlogPostSchema>;
 export type TPublishBlogPostPayload = z.infer<typeof publishBlogPostSchema>;
 export type TPublicBlogPostListQuery = z.infer<
   typeof publicBlogPostListQuerySchema
+>;
+export type TPublicBlogFeaturedQuery = z.infer<
+  typeof publicBlogFeaturedQuerySchema
 >;
 export type TAdminBlogPostListQuery = z.infer<
   typeof adminBlogPostListQuerySchema

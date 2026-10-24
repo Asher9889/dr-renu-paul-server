@@ -9,6 +9,7 @@ import type {
   TAdminBlogPostParams,
   TCreateBlogPostPayload,
   TPublishBlogPostPayload,
+  TPublicBlogFeaturedQuery,
   TPublicBlogPostListQuery,
   TPublicBlogPostParams,
   TUpdateBlogPostPayload,
@@ -45,6 +46,26 @@ export class BlogController {
         BLOG_MESSAGES.POSTS_FETCHED,
         result.data,
         result.meta,
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getPublicFeaturedPosts = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const query = req.validatedQuery as TPublicBlogFeaturedQuery;
+      const result = await this.blogService.getPublicFeaturedPosts(query);
+
+      return ApiResponse.success(
+        res,
+        StatusCodes.OK,
+        BLOG_MESSAGES.FEATURED_POSTS_FETCHED,
+        result.data,
       );
     } catch (error) {
       next(error);
@@ -172,11 +193,7 @@ export class BlogController {
     }
   };
 
-  createAdminPost = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  createAdminPost = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const payload = req.validatedBody as TCreateBlogPostPayload;
       const post = await this.blogService.createPost(payload);
@@ -289,11 +306,7 @@ export class BlogController {
     }
   };
 
-  uploadAdminMedia = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  uploadAdminMedia = async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.file) {
         throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, "Image is required.", [
@@ -301,21 +314,14 @@ export class BlogController {
         ]);
       }
 
-      const forwardedProto = req.get("x-forwarded-proto")?.split(",")[0]?.trim();
-      const forwardedHost = req.get("x-forwarded-host")?.split(",")[0]?.trim();
-      const host = forwardedHost || req.get("host");
-      const requestBaseUrl = host
-        ? `${forwardedProto || req.protocol}://${host}`
-        : "";
+      // const forwardedProto = req.get("x-forwarded-proto")?.split(",")[0]?.trim();
+      // const forwardedHost = req.get("x-forwarded-host")?.split(",")[0]?.trim();
+      // const host = forwardedHost || req.get("host");
+      // const requestBaseUrl = host ? `${forwardedProto || req.protocol}://${host}` : "";
 
-      const media = await this.mediaService.uploadImage(req.file, requestBaseUrl);
+      const media = await this.mediaService.uploadImage(req.file);
 
-      return ApiResponse.success(
-        res,
-        StatusCodes.CREATED,
-        BLOG_MESSAGES.MEDIA_UPLOADED,
-        media,
-      );
+      return ApiResponse.success(res, StatusCodes.CREATED, BLOG_MESSAGES.MEDIA_UPLOADED, media);
     } catch (error) {
       next(error);
     }
