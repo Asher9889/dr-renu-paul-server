@@ -8,6 +8,7 @@ async function connectMongoDB(): Promise<void> {
         await mongoose.connect(uri);
     } catch (error) {
         logger.error("Error connecting to MongoDB: "+ error);
+        throw error;
     }
 }
 

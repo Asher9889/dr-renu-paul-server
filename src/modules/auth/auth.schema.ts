@@ -7,7 +7,11 @@ export const loginSchema = z.object({
 }).strict();
 
 export const refreshTokenSchema = z.object({
-    refreshToken: z.string().min(1, "Refresh token is required"),
+    refreshToken: z.string().min(1, "Refresh token is required").optional(),
 }).strict();
 
 export const logoutSchema = z.object({}).strict();
+
+export const googleAuthQuerySchema = z.object({
+    redirect: z.string().trim().optional(),
+}).strict();

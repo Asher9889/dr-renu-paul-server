@@ -1,14 +1,14 @@
 export const USER_ROLE = {
-    SUPER_ADMIN: "super_admin",
-    ADMIN: "admin",
-    USER: "user",
+    SUPER_ADMIN: "SUPER_ADMIN",
+    ADMIN: "ADMIN",
+    USER: "USER",
 } as const;
 
 export const ACCOUNT_STATUS = {
-    ACTIVE: "active",
-    INACTIVE: "inactive",
-    BLOCKED: "blocked",
-    PENDING_VERIFICATION: "pending_verification",
+    ACTIVE: "ACTIVE",
+    INACTIVE: "INACTIVE",
+    BLOCKED: "BLOCKED",
+    PENDING_VERIFICATION: "PENDING_VERIFICATION",
 } as const;
 
 export const USER_MESSAGES = {
@@ -22,4 +22,5 @@ export const USER_MESSAGES = {
     ACCOUNT_BLOCKED: "Account has been blocked. Please contact administrator.",
     EMAIL_ALREADY_EXISTS: "Email already exists.",
     USER_NOT_FOUND: "User not found.",
+    GOOGLE_ACCOUNT_CONFLICT: "This email is already linked to a different Google account.",
 } as const;

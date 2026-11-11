@@ -4,12 +4,16 @@ import { globalErrorHandler, routeNotExistsHandler } from "./utils/index.ts";
 import { connectMongoDB } from "./db/index.ts"
 import apiRoutes from "./routes/index.ts";
 import { envConfig, logger } from "./config/index.ts";
+import { bookProcessingService } from "./modules/book/index.ts";
 
 
 const app = express();
 
 connectMongoDB()
-    .catch((err) => logger.error({ err }, "Failed to restore Telegram listeners"));
+    .then(() => {
+        bookProcessingService.start();
+    })
+    .catch((err) => logger.error({ err }, "Failed to connect to MongoDB"));
 
 // app.use(httpLogger);
 app.use(express.json({ limit: "2mb" }));

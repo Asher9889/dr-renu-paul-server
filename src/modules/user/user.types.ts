@@ -14,7 +14,12 @@ export type TAccountStatus = (typeof ACCOUNT_STATUS)[keyof typeof ACCOUNT_STATUS
 export interface IUser {
     id: string;
     email: string;
-    password: string;
+    // Profile fields supplied by Google; optional for password-only accounts.
+    name?: string | null;
+    avatarUrl?: string | null;
+    // Passwordless accounts sign in with Google, so this is absent for them.
+    password?: string;
+    googleId?: string | null;
     role: TUserRole;
     accountStatus: TAccountStatus;
     lastLoginAt: Date | null;

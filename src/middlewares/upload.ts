@@ -2,21 +2,21 @@ import multer from "multer";
 import { StatusCodes } from "http-status-codes";
 import { ApiError } from "../utils/index.ts";
 
-const allowedMimeTypes = new Set([
+const allowedImageMimeTypes = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/avif",
 ]);
 
-const upload = multer({
+const imageUpload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 8 * 1024 * 1024,
     files: 1,
   },
   fileFilter: (_req, file, callback) => {
-    if (!allowedMimeTypes.has(file.mimetype)) {
+    if (!allowedImageMimeTypes.has(file.mimetype)) {
       callback(
         new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, "Unsupported image type.", [
           {
@@ -27,9 +27,33 @@ const upload = multer({
       );
       return;
     }
-
     callback(null, true);
   },
 });
 
-export default upload;
+const allowedEbookMimeTypes = new Set(["application/pdf"]);
+
+const bookFileUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024,
+    files: 1,
+  },
+  fileFilter: (_req, file, callback) => {
+    if (!allowedEbookMimeTypes.has(file.mimetype)) {
+      callback(
+        new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, "Unsupported file type.", [
+          {
+            field: "file",
+            message: "Only PDF files are allowed.",
+          },
+        ]),
+      );
+      return;
+    }
+    callback(null, true);
+  },
+});
+
+export default imageUpload;
+export { bookFileUpload, imageUpload };

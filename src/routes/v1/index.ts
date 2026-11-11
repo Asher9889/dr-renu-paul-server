@@ -3,12 +3,15 @@ import { contactUsRoutes } from "../../modules/contact-us/index.ts";
 import { blogAdminRoutes, blogRoutes } from "../../modules/blog/index.ts";
 import { authRoutes } from "../../modules/auth/index.ts";
 import { userRoutes } from "../../modules/user/index.ts";
+import { bookAdminRoutes, bookRoutes } from "../../modules/book/index.ts";
 
 const router = express.Router();
 
 router.use("/contact-us", contactUsRoutes);
 router.use("/blog", blogRoutes);
 router.use("/admin/blog", blogAdminRoutes);
+router.use("/books", bookRoutes);
+router.use("/admin/books", bookAdminRoutes);
 router.use("/auth", authRoutes);
 router.use("/users", userRoutes);
 

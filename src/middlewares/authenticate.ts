@@ -40,7 +40,8 @@ async function authenticate(req: Request, res: Response, next: NextFunction) {
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Account is inactive");
         }
 
-        req.validatedUser = user;
+        // Lean documents expose `_id`; the rest of the app expects `id`.
+        req.validatedUser = { ...user, id: String(user._id) };
 
         logger.info("User authenticated successfully");
         return next();

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { ApiError } from "../../utils/index.ts";
 import { USER_MESSAGES, USER_ROLE, ACCOUNT_STATUS } from "./user.constant.ts";
 import type { IUser, TUserRole, TAccountStatus } from "./user.types.ts";
-import { UserModel } from "./user.model.ts";
+import { UserModel, type IUserDocument } from "./user.model.ts";
 import type {
     TCreateUserPayload,
     TUpdateUserPayload,
@@ -52,7 +52,89 @@ export class UserService {
     }
 
     async getUserByEmail(email: string): Promise<IUser | null> {
-        return UserModel.findOne({ email }).select("+password").lean();
+        const user = await UserModel.findOne({ email }).select("+password").lean();
+
+        if (!user) return null;
+
+        // Lean documents expose `_id`; callers rely on the `id` virtual.
+        return { ...user, id: String(user._id) };
+    }
+
+    /**
+     * Resolves the account behind a verified Google profile. An existing
+     * password account with the same email is linked to Google on first
+     * sign-in instead of creating a duplicate.
+     */
+    async findOrCreateGoogleUser(profile: {
+        googleId: string;
+        email: string;
+        name?: string | undefined;
+        avatarUrl?: string | undefined;
+    }): Promise<IUser> {
+        const existingUser = await UserModel.findOne({
+            $or: [{ googleId: profile.googleId }, { email: profile.email }],
+        });
+
+        if (existingUser) {
+            if (existingUser.googleId && existingUser.googleId !== profile.googleId) {
+                throw new ApiError(
+                    StatusCodes.CONFLICT,
+                    USER_MESSAGES.GOOGLE_ACCOUNT_CONFLICT,
+                    [{ field: "email", message: USER_MESSAGES.GOOGLE_ACCOUNT_CONFLICT }],
+                );
+            }
+
+            let hasChanges = false;
+
+            if (!existingUser.googleId) {
+                existingUser.googleId = profile.googleId;
+                hasChanges = true;
+            }
+
+            // Google is the source of truth for the profile, so keep the
+            // display name and avatar fresh on every sign-in.
+            if (profile.name && existingUser.name !== profile.name) {
+                existingUser.name = profile.name;
+                hasChanges = true;
+            }
+
+            if (profile.avatarUrl && existingUser.avatarUrl !== profile.avatarUrl) {
+                existingUser.avatarUrl = profile.avatarUrl;
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                await existingUser.save();
+            }
+
+            return this.toUser(existingUser);
+        }
+
+        const createdUser = await UserModel.create({
+            email: profile.email,
+            googleId: profile.googleId,
+            name: profile.name ?? null,
+            avatarUrl: profile.avatarUrl ?? null,
+            role: USER_ROLE.USER,
+            accountStatus: ACCOUNT_STATUS.ACTIVE,
+        });
+
+        return this.toUser(createdUser);
+    }
+
+    private toUser(document: IUserDocument): IUser {
+        return {
+            id: document.id,
+            email: document.email,
+            name: document.name ?? null,
+            avatarUrl: document.avatarUrl ?? null,
+            role: document.role,
+            accountStatus: document.accountStatus,
+            lastLoginAt: document.lastLoginAt,
+            createdAt: document.createdAt,
+            updatedAt: document.updatedAt,
+            googleId: document.googleId ?? null,
+        };
     }
 
     async getUsers(

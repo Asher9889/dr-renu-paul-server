@@ -6,11 +6,22 @@ const minioBucketName = process.env.MINIO_BUCKET_NAME || "";
 const minioPublicUrl = (process.env.MINIO_PUBLIC_URL || minioEndpoint).replace(/\/+$/, "");
 const apiPublicUrl = (process.env.API_PUBLIC_URL || "").replace(/\/+$/, "");
 const minioMediaMode = process.env.MINIO_MEDIA_MODE === "public" ? "public" : "proxy";
+const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/+$/, "");
+// Matches the callback already registered in the Google Cloud console. The
+// Next.js app proxies this legacy path to the API.
+const googleRedirectUri = process.env.GOOGLE_REDIRECT_URI || `${frontendUrl}/api/auth/callback/google`;
 
 const envConfig = {
     port: Number(process.env.PORT),
 
     apiPublicUrl,
+
+    google: {
+        clientId: process.env.GOOGLE_CLIENT_ID || "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+        redirectUri: googleRedirectUri,
+        frontendUrl,
+    },
 
     minio: {
         endpoint: minioEndpoint,
@@ -20,6 +31,22 @@ const envConfig = {
         bucketName: minioBucketName,
         publicUrl: minioPublicUrl,
         mediaMode: minioMediaMode,
+    },
+
+    book: {
+        worker: {
+            enabled: process.env.BOOK_WORKER_ENABLED !== "false",
+        },
+        reader: {
+            pageCacheSeconds: Number(process.env.BOOK_PAGE_CACHE_SECONDS) || 3600,
+        },
+    },
+
+    razorpay: {
+        // Test or live credentials from the Razorpay dashboard.
+        keyId: process.env.RAZORPAY_KEY!,
+        keySecret: process.env.RAZORPAY_KEY_SECRET!,
+        webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET!,
     },
 
     blog: {

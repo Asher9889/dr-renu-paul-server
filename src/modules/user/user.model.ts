@@ -18,10 +18,28 @@ const userSchema = new mongoose.Schema<IUserDocument>(
             trim: true,
             index: true,
         },
+        // Google supplies these on every sign-in; they stay optional for
+        // password-only accounts created by an administrator.
+        name: {
+            type: String,
+            required: false,
+            trim: true,
+            maxlength: 120,
+        },
+        avatarUrl: {
+            type: String,
+            required: false,
+            trim: true,
+            maxlength: 2048,
+        },
         password: {
             type: String,
-            required: true,
+            required: false,
             select: false,
+        },
+        googleId: {
+            type: String,
+            required: false,
         },
         role: {
             type: String,
@@ -47,11 +65,13 @@ const userSchema = new mongoose.Schema<IUserDocument>(
 );
 
 userSchema.index({ email: 1 }, { unique: true });
+// Sparse so existing and passwordless accounts without a Google link do not collide.
+userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 userSchema.index({ role: 1 });
 userSchema.index({ accountStatus: 1 });
 
-(userSchema as any).pre("save", async function (this: IUserDocument, next: (err?: Error) => void) {
-    if (!this.isModified("password")) return next();
+userSchema.pre("save", async function (this: IUserDocument) {
+    if (!this.isModified("password") || !this.password) return;
 
     try {
         this.password = await argon2.hash(this.password, {
@@ -60,13 +80,16 @@ userSchema.index({ accountStatus: 1 });
             timeCost: 3,
             parallelism: 1,
         });
-        next();
+        // next();
     } catch (error) {
-        next(error as Error);
+        throw error;
+        // next(error as Error);
     }
 });
 
 userSchema.methods.comparePassword = async function (this: IUserDocument, candidatePassword: string): Promise<boolean> {
+    if (!this.password) return false;
+
     try {
         return await argon2.verify(this.password, candidatePassword);
     } catch {

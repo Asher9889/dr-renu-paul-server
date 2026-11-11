@@ -18,11 +18,7 @@ export class UserController {
         this.userService = userService;
     }
 
-    createUser = async (
-        req: Request,
-        res: Response,
-        next: NextFunction,
-    ) => {
+    createUser = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const payload = req.validatedBody as TCreateUserPayload;
             const user = await this.userService.createUser(payload);
